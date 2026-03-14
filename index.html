@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-top: 1px solid #494949;
+        border-bottom: 1px solid #eaeaea;
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      .title {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-top: 20px;
+      }
+      .wrapper {
+        width: 1100px;
+        margin: 0px 14px;
+      }
+      .semititle {
+        display: flex;
+        justify-content: space-between;
+      }
+      .semititleText {
+        font-weight: bold;
+        font-size: 18px;
+      }
+      .todayDate {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+      }
+      .teamImage {
+        width: 32px;
+        height: 32px;
+        object-fit: cover;
+      }
+      .tablehead {
+        background-color: #f7f7f7;
+        height: 43px;
+        font-size: 13px;
+      }
+      .tablehead th {
+        border-bottom: 1px solid #ededed;
+      }
+
+      .ranktablebody {
+        font-size: 13px;
+      }
+      .ranktablebody td {
+        border-bottom: 1px solid #f4f4f4;
+      }
+      .teamLink {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .teamLink p {
+        margin: 0;
+      }
+
+      .arrow {
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="season" class="title"></h1>
+    <div style="display: flex; justify-content: center">
+      <div class="wrapper">
+        <div class="semititle">
+          <h4 class="semititleText">종합 순위</h4>
+          <p id="todayDate" class="todayDate"></p>
+        </div>
+        <table style="width: 100%">
+          <thead class="tablehead">
+            <th
+              style="
+                font-weight: 400;
+                font-size: 13px;
+                width: 40px;
+                color: rgba(0, 0, 0, 0.5);
+              "
+            >
+              순위
+            </th>
+            <th
+              style="
+                font-weight: 400;
+                text-align: left;
+                color: rgba(0, 0, 0, 0.5);
+              "
+            >
+              팀
+            </th>
+            <th style="width: 70px; font-weight: normal">경기</th>
+            <th style="width: 70px; font-weight: normal">승</th>
+            <th style="width: 70px; font-weight: normal">무</th>
+            <th style="width: 70px; font-weight: normal">패</th>
+            <th style="color: #1760f0; width: 70px; font-weight: normal">
+              승률
+            </th>
+            <th style="width: 70px; font-weight: normal">게임차</th>
+            <th style="width: 70px; font-weight: normal">연속</th>
+          </thead>
+          <tbody id="rankTableRow" class="ranktablebody"></tbody>
+        </table>
+      </div>
+    </div>
+    <script>
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth() + 1;
+      const day = today.getDate() - 1;
+      const todayDate = `※ ${year}년 ${month}월 ${day}일 기준`;
+      const todayDateText = document.getElementById("todayDate");
+      todayDateText.innerHTML = todayDate;
+
+      const teamData = [];
+      const jsonUrl =
+        "https://prof-jwchi.github.io/kopo-front2026/Json/baseball.json";
+
+      const seasonTitle = document.getElementById("season");
+
+      fetch(jsonUrl)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          const season = data.season.seasonKey;
+          data.list.forEach((rankData) => {
+            teamData.push({
+              teamRank: rankData.rank.rank,
+              teamName: rankData.shortName,
+              imageUrl: rankData.imageUrl,
+              teamId: rankData.teamId,
+              gameCount: rankData.rank.game,
+              winCount: rankData.rank.win,
+              drawCount: rankData.rank.draw,
+              lossCount: rankData.rank.loss,
+              winRate: rankData.rank.wpct,
+              gameBehind: rankData.rank.gb,
+              gameFlow: rankData.rank.streak,
+            });
+          });
+
+          const tbody = document.getElementById("rankTableRow");
+          teamData.map((data, index) => {
+            let bgColor = index % 2 == 1 ? "hsla(0,0%,85%,.09)" : "white";
+            let row = `<tr style="background-color:${bgColor}; height:44px;">
+              <td style="font-weight:bold; width:40px; text-align:center;">${data.teamRank}</td>
+              <td>
+               <a class="teamLink" href="https://sports.daum.net/team/kbo/${data.teamId}">
+                <img class="teamImage" src="${data.imageUrl}" alt="${data.teamName} 이미지"/>
+                <p>${data.teamName}</p>
+                <p class="arrow">></p>
+              </a>
+              </td>
+              <td style="width: 70px; text-align:center;">${data.gameCount}</td>
+              <td style="width: 70px; text-align:center;">${data.winCount}</td>
+              <td style="width: 70px; text-align:center;">${data.drawCount}</td>
+              <td style="width: 70px; text-align:center;">${data.lossCount}</td>
+              <td style="background-color:rgba(64,134,255,.06); width: 70px; text-align:center; font-weight:bold;">${data.winRate}</td>
+              <td style="width: 70px; text-align:center;">${data.gameBehind}</td>
+              <td style="width: 70px; text-align:center;">${data.gameFlow}</td>
+              </tr>
+              `;
+            tbody.innerHTML += row;
+          });
+          seasonTitle.innerHTML = `${season}`;
+        })
+        .catch((error) => {
+          console.error("JSON 파일을 가져오는 데 실패했습니다.", error);
+        });
+    </script>
+  </body>
+</html>
